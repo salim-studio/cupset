@@ -118,7 +118,7 @@ export default function App() {
       </div>
 
       <footer className="foot">
-        <span>{t.footer}</span>
+        <span>{t.footer}</span><span className="ver">v2.0</span>
       </footer>
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
