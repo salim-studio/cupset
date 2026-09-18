@@ -25,7 +25,7 @@ button, input, select, textarea { font-family: inherit; }
 .btn.sm { padding: 5px 9px; font-size: 12.5px; border-radius: 8px; }
 .layout { display: grid; grid-template-columns: 232px minmax(0, 1fr) 264px; height: calc(100% - 56px); }
 .col { overflow: auto; background: var(--panel); }
-.col.mid { display: flex; flex-direction: column; background: #0a0d15; overflow: hidden; }
+.col.mid { display: flex; flex-direction: column; background: #0a0d15; overflow-y: auto; overflow-x: hidden; min-height: 0; }
 .side { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
 .card { background: var(--panel2); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; }
 details.card summary { cursor: pointer; font-size: 13px; color: var(--mut); font-weight: 800; }
@@ -39,15 +39,16 @@ input[type=text], input[type=number], select, textarea {
 }
 input[type=range] { width: 100%; accent-color: var(--acc); }
 input[type=color] { width: 100%; height: 34px; border: 1px solid var(--line); border-radius: 8px; background: #0d1322; }
-.preview-wrap { padding: 14px 14px 6px; display: flex; flex-direction: column; gap: 8px; }
-canvas.stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 16px; border: 1px solid var(--line); }
+.preview-wrap { padding: 10px 14px 4px; display: flex; flex-direction: column; gap: 8px; flex: 0 0 auto; }
+canvas.stage { display: block; width: min(100%, calc(34vh * 16 / 9)); height: auto; aspect-ratio: 16/9; margin: 0 auto;
+  background: #000; border-radius: 16px; border: 1px solid var(--line); }
 .transport { display: flex; align-items: center; gap: 8px; }
 .tbtn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel2);
   color: var(--txt); font-size: 17px; cursor: pointer; }
 .tbtn.play { background: linear-gradient(135deg, #22d3ee, #818cf8); color: #06121f; border: none; font-size: 18px; }
 .time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--mut); }
 .scrub { flex: 1; }
-.timeline { flex: 1; overflow: auto; border-top: 1px solid var(--line); background: #0c111e; padding: 0 12px 18px; }
+.timeline { flex: 1 1 300px; min-height: 300px; overflow: auto; border-top: 1px solid var(--line); background: #0c111e; padding: 0 12px 18px; }
 .tl-tools { position: sticky; top: 0; z-index: 9; background: #0c111e; padding: 10px 0 8px; }
 .tl-hint { margin-top: 10px; }
 .ruler-row { margin-top: 2px; }
