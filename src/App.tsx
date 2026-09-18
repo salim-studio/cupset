@@ -4,6 +4,19 @@ import Timeline from './ui/Timeline';
 import { Inspector, MediaBin } from './ui/Panels';
 import { useStore, sanitize } from './store';
 
+function Logo() {
+  return (
+    <span className="logo" aria-hidden>
+      <svg viewBox="0 0 64 64" width="26" height="26">
+        <rect x="4" y="14" width="56" height="42" rx="10" fill="#fff" opacity="0.95" />
+        <rect x="4" y="14" width="56" height="12" rx="6" fill="#0b0e14" />
+        <path d="M12 14l6 12M24 14l6 12M36 14l6 12M48 14l6 12" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+        <path d="M27 33l14 8-14 8z" fill="#0b0e14" />
+      </svg>
+    </span>
+  );
+}
+
 export default function App() {
   const name = useStore((s) => s.projectName);
   const [toastMsg, setToastMsg] = useState('');
@@ -39,7 +52,7 @@ export default function App() {
         const st = useStore.getState();
         localStorage.setItem('cupset-autosave', JSON.stringify({
           name: st.projectName, tracks: st.tracks,
-          clips: st.clips.map((c) => ({ ...c, url: c.type === 'text' || c.type === 'shape' ? undefined : undefined })),
+          clips: st.clips.map((c) => ({ ...c, url: undefined })),
         }));
       } catch { /* noop */ }
     }, 8000);
@@ -53,7 +66,7 @@ export default function App() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       const st = useStore.getState();
       if (e.code === 'Space') { e.preventDefault(); st.setPlaying(!st.playing); }
-      else if (e.key === 's' || e.key === 'S' || e.key === 'س') st.splitAt(st.currentTime);
+      else if (e.key === 's' || e.key === 'S') st.splitAt(st.currentTime);
       else if (e.key === 'Delete' || e.key === 'Backspace') st.deleteSelected();
       else if (e.key === 'ArrowRight') st.setTime(st.currentTime + (e.shiftKey ? 2 : 1 / 30));
       else if (e.key === 'ArrowLeft') st.setTime(Math.max(0, st.currentTime - (e.shiftKey ? 2 : 1 / 30)));
@@ -67,16 +80,16 @@ export default function App() {
   return (
     <div style={{ height: '100%' }}>
       <header className="top">
-        <div className="logo">C</div>
+        <Logo />
         <div className="brand">Cup<small>Set</small></div>
         <input type="text" value={name} onChange={(e) => useStore.getState().setName(e.target.value)}
           style={{ maxWidth: 220, background: '#0d1322', border: '1px solid var(--line)', color: 'var(--txt)', borderRadius: 9, padding: '7px 10px', fontSize: 13 }} />
-        <span className="time">محرر فيديو داخل المتصفح • سريع • بدون رفع • بدون علامة مائية</span>
+        <span className="time">Browser video editor • fast • no uploads • no watermark</span>
         <span style={{ flex: 1 }} />
         <button className="btn sm" onClick={() => useStore.getState().undo()}>↩</button>
         <button className="btn sm" onClick={() => useStore.getState().redo()}>↪</button>
-        <button className="btn sm danger" onClick={() => { if (confirm('مسح كل المقاطع؟')) useStore.getState().clearAll(); }}>🗑 جديد</button>
-        <button className="btn pri" onClick={() => window.dispatchEvent(new Event('cupset-export'))}>📤 تصدير</button>
+        <button className="btn sm danger" onClick={() => { if (confirm('Clear all clips?')) useStore.getState().clearAll(); }}>🗑 New</button>
+        <button className="btn pri" onClick={() => window.dispatchEvent(new Event('cupset-export'))}>📤 Export</button>
       </header>
 
       <div className="layout">
@@ -87,6 +100,10 @@ export default function App() {
         </div>
         <div className="col right"><Inspector toast={toast} /></div>
       </div>
+
+      <footer className="foot">
+        <span>© 2026 salim-slimani — CupSet. Free &amp; open source, MIT licensed.</span>
+      </footer>
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
     </div>

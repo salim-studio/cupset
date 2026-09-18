@@ -90,11 +90,11 @@ export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden
     ctx.strokeRect(90, 90, W - 180, H - 180);
     ctx.setLineDash([]);
     ctx.fillStyle = '#8fa0c2';
-    ctx.font = '800 44px Cairo, Tajawal, Arial, sans-serif';
-    ctx.fillText('🎬 استورد وسائط من اللوحة الجانبية للبدء', W / 2, H / 2 - 22);
+    ctx.font = '800 44px Inter, "Segoe UI", Arial, sans-serif';
+    ctx.fillText('🎬 Import media from the side panel to begin', W / 2, H / 2 - 22);
     ctx.fillStyle = '#5b6a8c';
-    ctx.font = '500 26px Cairo, Tajawal, Arial, sans-serif';
-    ctx.fillText('فيديو • صور • صوت • نصوص — كل شيء يعمل محلياً بدون رفع', W / 2, H / 2 + 34);
+    ctx.font = '500 26px Inter, "Segoe UI", Arial, sans-serif';
+    ctx.fillText('Video • images • audio • text — everything runs locally, nothing is uploaded', W / 2, H / 2 + 34);
     ctx.restore();
     return;
   }
@@ -140,7 +140,7 @@ export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden
       const { a, dy, scale } = textAnimAlpha(c, local);
       ctx.globalAlpha *= a;
       const fs = c.text.fontSize * (c.transform.scale / 100) * scale;
-      ctx.font = `${c.text.bold ? '800' : '500'} ${fs}px Cairo, Tajawal, Arial, sans-serif`;
+      ctx.font = `${c.text.bold ? '800' : '500'} ${fs}px Inter, "Segoe UI", Arial, sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       let content = c.text.content;
       if (c.text.anim === 'typewriter') {

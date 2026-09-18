@@ -23,8 +23,7 @@ export default function Timeline() {
 
   const seek = (e: React.MouseEvent) => {
     const lane = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    // RTL: t=0 at the right edge
-    const ratio = (lane.right - e.clientX) / (lane.width || 1);
+    const ratio = (e.clientX - lane.left) / (lane.width || 1);
     const v = ratio * dur;
     if (Number.isFinite(v)) useStore.getState().setTime(Math.max(0, v));
   };
@@ -44,58 +43,55 @@ export default function Timeline() {
     const dx = (e.clientX - drag.x0) / st.zoom;
     if (!Number.isFinite(dx)) return;
     if (drag.mode === 'move') {
-      // RTL: dragging leftwards increases time (mirror of LTR)
-      let ns = Math.max(0, drag.origStart - dx);
+      let ns = Math.max(0, drag.origStart + dx);
       const t = st.currentTime;
       if (Math.abs(ns - t) < 0.2) ns = t;
       const laneEl = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('[data-track]') as HTMLElement | null;
       const trackId = laneEl?.dataset.track;
-      const cur = st.clips.find((x) => x.id === drag.id);
-      let nextTrack = trackId || cur?.trackId || drag.id;
       const moved = st.clips.find((x) => x.id === drag.id);
+      let nextTrack = trackId || moved?.trackId || drag.id;
       const tr = useStore.getState().tracks.find((x) => x.id === nextTrack);
       if (moved && tr && ((moved.type === 'audio' && tr.kind !== 'audio') || (moved.type !== 'audio' && tr.kind === 'audio'))) {
         nextTrack = moved.trackId; // incompatible lane → stay
       }
       useStore.setState({ clips: st.clips.map((c) => (c.id === drag.id ? { ...c, start: ns, trackId: nextTrack } : c)) });
     } else if (drag.mode === 'l') {
-      // right handle (start edge in RTL)
-      const ns = Math.max(0, drag.origStart - dx);
+      const ns = Math.max(0, drag.origStart + dx);
       const d = drag.origDur - (ns - drag.origStart);
       if (d < 0.2) return;
       useStore.setState({
         clips: st.clips.map((c) => (c.id === drag.id ? { ...c, start: ns, duration: d, offset: Math.max(0, drag.origOff + (ns - drag.origStart)) } : c)),
       });
     } else {
-      const d = Math.max(0.2, drag.origDur - dx);
+      const d = Math.max(0.2, drag.origDur + dx);
       useStore.setState({ clips: st.clips.map((c) => (c.id === drag.id ? { ...c, duration: d } : c)) });
     }
   };
 
-  const gridBg = `repeating-linear-gradient(to left, rgba(148,163,184,.20) 0 1px, transparent 1px ${zoom}px)`;
+  const gridBg = `repeating-linear-gradient(to right, rgba(148,163,184,.20) 0 1px, transparent 1px ${zoom}px)`;
 
   return (
     <div className="timeline" ref={wrapRef} onPointerMove={onMove} onPointerUp={() => setDrag(null)}>
       <div className="row tl-tools">
-        <button className="btn sm" onClick={() => useStore.getState().setZoom(zoom + 18)}>＋ تقريب</button>
-        <button className="btn sm" onClick={() => useStore.getState().setZoom(zoom - 18)}>− إبعاد</button>
-        <button className="btn sm" onClick={() => useStore.getState().setLaneH(laneH + 16)} title="تكبير المسارات">↕＋</button>
-        <button className="btn sm" onClick={() => useStore.getState().setLaneH(laneH - 16)} title="تصغير المسارات">↕−</button>
-        <button className="btn sm" onClick={() => useStore.getState().splitAt(time)}>✂ قص (S)</button>
-        <button className="btn sm danger" onClick={() => useStore.getState().deleteSelected()}>🗑 حذف (Del)</button>
-        <button className="btn sm" onClick={() => useStore.getState().undo()}>↩ تراجع</button>
-        <button className="btn sm" onClick={() => useStore.getState().redo()}>↪ إعادة</button>
+        <button className="btn sm" onClick={() => useStore.getState().setZoom(zoom + 18)}>＋ Zoom in</button>
+        <button className="btn sm" onClick={() => useStore.getState().setZoom(zoom - 18)}>− Zoom out</button>
+        <button className="btn sm" onClick={() => useStore.getState().setLaneH(laneH + 16)} title="Taller tracks">↕＋</button>
+        <button className="btn sm" onClick={() => useStore.getState().setLaneH(laneH - 16)} title="Shorter tracks">↕−</button>
+        <button className="btn sm" onClick={() => useStore.getState().splitAt(time)}>✂ Split (S)</button>
+        <button className="btn sm danger" onClick={() => useStore.getState().deleteSelected()}>🗑 Delete (Del)</button>
+        <button className="btn sm" onClick={() => useStore.getState().undo()}>↩ Undo</button>
+        <button className="btn sm" onClick={() => useStore.getState().redo()}>↪ Redo</button>
         <span className="time" style={{ marginInlineStart: 'auto' }}>⏱ <span dir="ltr">{fmt(time)} / {fmt(dur)}</span></span>
       </div>
 
       {/* ruler aligned with lanes */}
       <div className="trow ruler-row">
-        <div className="r-corner">الوقت</div>
+        <div className="r-corner">Time</div>
         <div className="ruler" style={{ width }} onClick={seek}>
           {ticks.map((t) => (
-            <span key={t} className="tick" style={{ right: t * zoom }}>{fmt(t)}</span>
+            <span key={t} className="tick" style={{ left: t * zoom }}>{fmt(t)}</span>
           ))}
-          <div className="playhead" style={{ right: time * zoom }} />
+          <div className="playhead" style={{ left: time * zoom }} />
         </div>
       </div>
 
@@ -105,11 +101,11 @@ export default function Timeline() {
           <div className="trow" key={tr.id}>
             <div className="thead" style={{ minHeight: laneH }}>
               <b>{tr.name}</b>
-              <span className="time">{tr.kind === 'audio' ? '🔊 صوت' : tr.kind === 'video' ? '🎬 فيديو' : '✨ تراكب'}</span>
+              <span className="time">{tr.kind === 'audio' ? '🔊 Audio' : tr.kind === 'video' ? '🎬 Video' : '✨ Overlay'}</span>
               <div className="ops">
-                <button className={`chip ${tr.locked ? 'on' : ''}`} onClick={() => useStore.getState().toggleTrack(tr.id, 'locked')} title="قفل">🔒</button>
-                <button className={`chip ${tr.hidden ? 'on' : ''}`} onClick={() => useStore.getState().toggleTrack(tr.id, 'hidden')} title="إظهار/إخفاء">👁</button>
-                {tr.kind === 'audio' && <button className={`chip ${tr.muted ? 'on' : ''}`} onClick={() => useStore.getState().toggleTrack(tr.id, 'muted')} title="كتم">🔇</button>}
+                <button className={`chip ${tr.locked ? 'on' : ''}`} onClick={() => useStore.getState().toggleTrack(tr.id, 'locked')} title="Lock">🔒</button>
+                <button className={`chip ${tr.hidden ? 'on' : ''}`} onClick={() => useStore.getState().toggleTrack(tr.id, 'hidden')} title="Show / hide">👁</button>
+                {tr.kind === 'audio' && <button className={`chip ${tr.muted ? 'on' : ''}`} onClick={() => useStore.getState().toggleTrack(tr.id, 'muted')} title="Mute">🔇</button>}
               </div>
             </div>
             <div
@@ -117,13 +113,13 @@ export default function Timeline() {
               style={{ width, height: laneH, backgroundImage: gridBg, opacity: tr.hidden ? 0.45 : 1 }}
               onClick={seek}
             >
-              <div className="playhead" style={{ right: time * zoom }} />
-              {tclips.length === 0 && <span className="lane-empty">مسار فارغ — استورد وسائط من اللوحة الجانبية</span>}
+              <div className="playhead" style={{ left: time * zoom }} />
+              {tclips.length === 0 && <span className="lane-empty">Empty track — import media from the side panel</span>}
               {tclips.map((c) => (
                 <div
                   key={c.id}
                   className={`clip ${c.type} ${selectedId === c.id ? 'sel' : ''}`}
-                  style={{ right: c.start * zoom, width: Math.max(26, c.duration * zoom), top: 8, height: Math.max(40, laneH - 16), fontSize: laneH > 104 ? 13.5 : 12.5 }}
+                  style={{ left: c.start * zoom, width: Math.max(26, c.duration * zoom), top: 8, height: Math.max(40, laneH - 16), fontSize: laneH > 104 ? 13.5 : 12.5 }}
                   onPointerDown={(e) => onClipDown(e, c.id, 'move')}
                   onClick={(e) => e.stopPropagation()}
                   onDoubleClick={() => useStore.getState().select(c.id)}
@@ -140,7 +136,7 @@ export default function Timeline() {
           </div>
         );
       })}
-      <div className="time tl-hint">💡 اسحب المقاطع للتحريك • اسحب الأطراف للتقليم • انقر على المسار للتنقل • <span className="kbd">S</span> قص • <span className="kbd">مسافة</span> تشغيل • <span className="kbd">Del</span> حذف</div>
+      <div className="time tl-hint">💡 Drag clips to move • drag edges to trim • click a lane to seek • <span className="kbd">S</span> split • <span className="kbd">Space</span> play • <span className="kbd">Del</span> delete</div>
     </div>
   );
 }

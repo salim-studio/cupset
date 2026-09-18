@@ -63,7 +63,7 @@ export interface Track {
 export const defaultTransform = (): Transform => ({ x: 0, y: 0, scale: 100, rotation: 0, opacity: 100 });
 export const defaultFilter = (): FilterState => ({ brightness: 100, contrast: 100, saturate: 100, blur: 0, grayscale: 0, hue: 0 });
 export const defaultText = (): TextState => ({
-  content: 'نص جديد', fontSize: 64, color: '#ffffff', bg: 'transparent',
+  content: 'New text', fontSize: 64, color: '#ffffff', bg: 'transparent',
   bold: true, stroke: 'rgba(0,0,0,0.85)', align: 'center', anim: 'fade'
 });
 

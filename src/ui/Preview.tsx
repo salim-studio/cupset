@@ -69,9 +69,6 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
         const iv = setInterval(() => {
           const el = (performance.now() - t0) / 1000 / Math.max(1, target);
           setExp((e) => ({ ...e, p: Math.min(0.99, el) }));
-          if (useStore.getState().currentTime >= target - 0.05 || !playRef.current && useStore.getState().currentTime > 1) {
-            // keep recording till end reached
-          }
           if (useStore.getState().currentTime >= target - 0.08) { clearInterval(iv); resolve(); }
           if ((performance.now() - t0) / 1000 > target + 8) { clearInterval(iv); resolve(); }
         }, 120);
@@ -83,10 +80,10 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
       const ext = mime.includes('mp4') ? 'mp4' : 'webm';
       const url = URL.createObjectURL(blob);
       setExp((e) => ({ ...e, busy: false, p: 1, url, ext }));
-      toast(`تم التصدير بنجاح (${ext.toUpperCase()}) — جاهز للتحميل`);
+      toast(`Export complete (${ext.toUpperCase()}) — ready to download`);
     } catch (e: any) {
       setExp((x) => ({ ...x, busy: false }));
-      toast('تعذر التصدير: ' + (e?.message || e));
+      toast('Export failed: ' + (e?.message || e));
     }
   };
 
@@ -94,38 +91,38 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
     <div className="preview-wrap">
       <canvas ref={canvasRef} id="cupset-stage" className="stage" width={W} height={H} />
       <div className="transport">
-        <button className="tbtn" onClick={() => setTime(0)} title="البداية">⏮</button>
-        <button className="tbtn" onClick={() => setTime(Math.max(0, time - 2))} title="-2s">↺</button>
-        <button className="tbtn play" onClick={() => setPlaying(!playing)} title="تشغيل/إيقاف (مسافة)">
+        <button className="tbtn" onClick={() => setTime(0)} title="Go to start">⏮</button>
+        <button className="tbtn" onClick={() => setTime(Math.max(0, time - 2))} title="Back 2s">↺</button>
+        <button className="tbtn play" onClick={() => setPlaying(!playing)} title="Play / pause (Space)">
           {playing ? '⏸' : '▶'}
         </button>
-        <button className="tbtn" onClick={() => setTime(time + 2)} title="+2s">↻</button>
-        <button className="tbtn" onClick={() => useStore.getState().splitAt(time)} title="قص عند المؤشر (S)">✂</button>
+        <button className="tbtn" onClick={() => setTime(time + 2)} title="Forward 2s">↻</button>
+        <button className="tbtn" onClick={() => useStore.getState().splitAt(time)} title="Split at playhead (S)">✂</button>
         <input className="scrub" type="range" min={0} max={Math.max(1, dur)} step={0.033} value={shown}
           onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) setTime(v); }} />
         <span className="time"><span dir="ltr">{fmt(shown)} / {fmt(dur)}</span></span>
-        <button className="btn pri sm" onClick={() => setExp((e) => ({ ...e, open: true }))}>📤 تصدير</button>
+        <button className="btn pri sm" onClick={() => setExp((e) => ({ ...e, open: true }))}>📤 Export</button>
       </div>
 
       {exp.open && (
         <div className="card">
-          <h3>📤 تصدير الفيديو — سريع ويعمل محلياً بالكامل</h3>
+          <h3>📤 Export video — fast, 100% local</h3>
           <div className="row" style={{ flexWrap: 'wrap' }}>
-            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('hd')}>720p سريع</button>
-            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('fhd')}>1080p متوازن</button>
-            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('4k')}>جودة قصوى</button>
-            <button className="btn sm" onClick={() => setExp((e) => ({ ...e, open: false }))}>إغلاق</button>
+            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('hd')}>720p fast</button>
+            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('fhd')}>1080p balanced</button>
+            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('4k')}>Max quality</button>
+            <button className="btn sm" onClick={() => setExp((e) => ({ ...e, open: false }))}>Close</button>
           </div>
           {(exp.busy || exp.p > 0) && (
             <div style={{ marginTop: 10 }}>
               <div className="exp-bar"><i style={{ width: `${Math.round(exp.p * 100)}%` }} /></div>
-              <div className="time" style={{ marginTop: 4 }}>{exp.busy ? `جارٍ التصدير… ${Math.round(exp.p * 100)}%` : 'اكتمل ✅'}</div>
+              <div className="time" style={{ marginTop: 4 }}>{exp.busy ? `Exporting… ${Math.round(exp.p * 100)}%` : 'Done ✅'}</div>
             </div>
           )}
           {exp.url && (
             <div className="row" style={{ marginTop: 10 }}>
-              <a className="btn pri sm" href={exp.url} download={`cupset.${exp.ext}`}>⬇ تحميل cupset.{exp.ext}</a>
-              <span className="time">يعمل على كل الأجهزة بدون علامة مائية</span>
+              <a className="btn pri sm" href={exp.url} download={`cupset.${exp.ext}`}>⬇ Download cupset.{exp.ext}</a>
+              <span className="time">Works everywhere, no watermark</span>
             </div>
           )}
         </div>

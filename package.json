@@ -1,7 +1,9 @@
 {
   "name": "cupset",
   "version": "1.0.0",
-  "description": "CupSet — محرر فيديو احترافي داخل المتصفح (بديل CapCut مفتوح المصدر). سريع، يعمل 100% محلياً بدون رفع.",
+  "description": "CupSet — free, professional browser-based video editor. Fast, fully local, no uploads, no watermark.",
+  "author": "salim-slimani",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

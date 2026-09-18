@@ -1,45 +1,47 @@
-# CupSet 🎬
+# 🎬 CupSet
 
-**بديل CapCut مفتوح المصدر — محرر فيديو احترافي يعمل 100% داخل المتصفح.**
+**Free, professional video editing right in your browser.**
 
-مستوحى من [OpenReel Video](https://github.com/Augani/openreel-video) لكن **أسرع وأخف ومتكامل في حزمة واحدة**:
+CupSet is a fast, lightweight, fully client-side video editor. No installs, no uploads, no watermarks — your footage never leaves your device.
 
-- ⚡ **خفيف**: React + Canvas2D فقط (بدون Three.js الثقيل) — إقلاع فوري وحزمة أقل من 200KB
-- 🔒 **خصوصية كاملة**: كل المعالجة محلياً، لا رفع ولا سيرفرات
-- 🎬 **تايم لاين متعدد المسارات**: فيديو / صور / صوت / نص / أشكال — سحب، تقليم، قص ✂، حذف
-- 🎨 **فلاتر لحظية**: سطوع، تباين، تشبع، ضبابية، أبيض/أسود + تحولات تلاشي دخول/خروج
-- 🔤 **نصوص متحركة**: تلاشي، آلة كاتبة، انزلاق، انبثاق + ترجمة SRT + شريط سفلي
-- 🔊 **صوت متعدد**: تحكم بالصوت والسرعة، كتم/قفل/إخفاء المسارات
-- 🖥 **تسجيل شاشة مدمج** + استيراد فيديو/صور/صوت بالسحب
-- 📤 **تصدير MP4/WebM** بتسريع العتاد (MediaRecorder + captureStream) بدون علامة مائية
-- 💾 **حفظ تلقائي + تراجع/إعادة غير محدود + حفظ/فتح مشروع JSON**
-- ⌨ **اختصارات احترافية**: مسافة، S، Del، أسهم، Ctrl+Z
+## ✨ Features
 
-## التشغيل
+- **Multi-track timeline** — video, image, audio, text & shape tracks with drag, trim, split and ripple-friendly editing
+- **Real-time preview** — single-loop Canvas2D renderer, GPU-composited by the browser
+- **Filters & color** — brightness, contrast, saturation, blur, grayscale, hue-rotate
+- **Animated text** — fade, typewriter, slide, pop + SRT caption import + lower thirds
+- **Audio mixing** — per-clip volume & speed, track mute / lock / hide
+- **Transitions** — per-clip fade in / out
+- **Screen recording** — built-in capture straight to the timeline
+- **Export MP4 / WebM** — hardware-friendly `MediaRecorder` pipeline, 720p → 1080p → max quality
+- **Project files** — save / open as JSON, autosave every 8s, unlimited undo / redo
+- **Shortcuts** — `Space` play, `S` split, `Del` delete, arrows step frame-by-frame, `Ctrl+Z` undo
+
+## 🚀 Quick start
 
 ```bash
+git clone https://github.com/salim-studio/cupset.git
 cd cupset
 npm install
 npm run dev
-# افتح http://localhost:5174
+# open http://localhost:5174
 ```
 
-## البناء للإنتاج
+## 📦 Production build
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## لماذا أسرع من OpenReel؟
-
-| OpenReel | CupSet |
-|---|---|
-| ~130k سطر، monorepo، WebGPU + Three.js | ~1500 سطر، مشروع Vite واحد، Canvas2D مسرّع |
-| يتطلب pnpm + إعدادات معقدة | `npm install && npm run dev` فقط |
-| استهلاك ذاكرة عالٍ (4K + LRU cache) | حلقة render واحدة + مزامنة ذكية للوسائط |
-| تصدير WebCodecs المعقد | تصدير MediaRecorder فوري يعمل على كل المتصفحات |
-
-## المتصفحات
+## 🌍 Browsers
 
 Chrome / Edge 94+ ✅ — Firefox 130+ ✅ — Safari 16.4+ ✅
+
+## 🛠 Tech
+
+React 18 · TypeScript · Zustand · Vite · Canvas2D · Web Audio · MediaRecorder — zero heavy 3D deps, ~180 KB bundle.
+
+## 📄 License
+
+MIT — © 2026 salim-slimani. Free for personal and commercial use.

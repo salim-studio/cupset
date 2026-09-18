@@ -40,9 +40,9 @@ interface State {
 }
 
 const baseTracks = (): Track[] => [
-  { id: 'v1', kind: 'video', name: 'فيديو 1', locked: false, hidden: false, muted: false },
-  { id: 'v2', kind: 'overlay', name: 'تراكب / نص', locked: false, hidden: false, muted: false },
-  { id: 'a1', kind: 'audio', name: 'صوت 1', locked: false, hidden: false, muted: false },
+  { id: 'v1', kind: 'video', name: 'Video 1', locked: false, hidden: false, muted: false },
+  { id: 'v2', kind: 'overlay', name: 'Overlay / Text', locked: false, hidden: false, muted: false },
+  { id: 'a1', kind: 'audio', name: 'Audio 1', locked: false, hidden: false, muted: false },
 ];
 
 function probeDuration(file: File, type: string): Promise<number> {
@@ -83,7 +83,7 @@ export const totalDuration = (clips: Clip[]) =>
   }, 8);
 
 export const useStore = create<State>((set, get) => ({
-  projectName: 'مشروع CupSet',
+  projectName: 'CupSet Project',
   tracks: baseTracks(),
   clips: [],
   currentTime: 0,
@@ -161,7 +161,7 @@ export const useStore = create<State>((set, get) => ({
     const id = uid();
     set({
       clips: [...get().clips, {
-        id, trackId: 'v2', type: 'text', name: 'نص', mediaDuration: 4,
+        id, trackId: 'v2', type: 'text', name: 'Text', mediaDuration: 4,
         start: t, duration: 4, offset: 0, volume: 100, rate: 1,
         transform: defaultTransform(), filter: defaultFilter(), text: defaultText(),
         fadeIn: 0.25, fadeOut: 0.25,
@@ -175,7 +175,7 @@ export const useStore = create<State>((set, get) => ({
     const id = uid();
     set({
       clips: [...get().clips, {
-        id, trackId: 'v2', type: 'shape', name: 'شكل', mediaDuration: 4, shape,
+        id, trackId: 'v2', type: 'shape', name: 'Shape', mediaDuration: 4, shape,
         color: shape === 'bar' ? '#22d3ee' : '#f43f5e',
         start: get().currentTime, duration: 4, offset: 0, volume: 100, rate: 1,
         transform: { ...defaultTransform(), scale: shape === 'bar' ? 60 : 40 },
@@ -190,7 +190,7 @@ export const useStore = create<State>((set, get) => ({
     const id = uid();
     set({
       clips: [...get().clips, {
-        id, trackId: 'v2', type: 'text', name: 'ترجمة', mediaDuration: duration,
+        id, trackId: 'v2', type: 'text', name: 'Subtitle', mediaDuration: duration,
         start, duration, offset: 0, volume: 100, rate: 1,
         transform: { ...defaultTransform(), y: 32 },
         filter: defaultFilter(),
@@ -250,6 +250,6 @@ export const useStore = create<State>((set, get) => ({
   clearAll: () => { get().pushHistory(); set({ clips: [], selectedId: null, currentTime: 0, playing: false }); },
   loadProject: (tracks, clips, name) => {
     const clean = (Array.isArray(clips) ? clips : []).filter((c) => c && typeof c === 'object').map((c) => sanitize({ ...(c as Clip) }));
-    set({ tracks: tracks.length ? tracks : baseTracks(), clips: clean, projectName: name || 'مشروع CupSet', selectedId: null, currentTime: 0 });
+    set({ tracks: tracks.length ? tracks : baseTracks(), clips: clean, projectName: name || 'CupSet Project', selectedId: null, currentTime: 0 });
   },
 }));
