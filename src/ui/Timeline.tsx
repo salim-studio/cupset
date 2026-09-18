@@ -7,6 +7,7 @@ export default function Timeline() {
   const clips = useStore((s) => s.clips);
   const time = useStore((s) => s.currentTime);
   const zoom = useStore((s) => s.zoom);
+  const laneH = useStore((s) => s.laneH);
   const selectedId = useStore((s) => s.selectedId);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<null | { id: string; mode: 'move' | 'l' | 'r'; x0: number; origStart: number; origDur: number; origOff: number }>(null);
@@ -78,11 +79,13 @@ export default function Timeline() {
       <div className="row tl-tools">
         <button className="btn sm" onClick={() => useStore.getState().setZoom(zoom + 18)}>＋ تقريب</button>
         <button className="btn sm" onClick={() => useStore.getState().setZoom(zoom - 18)}>− إبعاد</button>
+        <button className="btn sm" onClick={() => useStore.getState().setLaneH(laneH + 16)} title="تكبير المسارات">↕＋</button>
+        <button className="btn sm" onClick={() => useStore.getState().setLaneH(laneH - 16)} title="تصغير المسارات">↕−</button>
         <button className="btn sm" onClick={() => useStore.getState().splitAt(time)}>✂ قص (S)</button>
         <button className="btn sm danger" onClick={() => useStore.getState().deleteSelected()}>🗑 حذف (Del)</button>
         <button className="btn sm" onClick={() => useStore.getState().undo()}>↩ تراجع</button>
         <button className="btn sm" onClick={() => useStore.getState().redo()}>↪ إعادة</button>
-        <span className="time" style={{ marginInlineStart: 'auto' }}>⏱ {fmt(time)} / {fmt(dur)}</span>
+        <span className="time" style={{ marginInlineStart: 'auto' }}>⏱ <span dir="ltr">{fmt(time)} / {fmt(dur)}</span></span>
       </div>
 
       {/* ruler aligned with lanes */}
@@ -100,7 +103,7 @@ export default function Timeline() {
         const tclips = clips.filter((c) => c.trackId === tr.id);
         return (
           <div className="trow" key={tr.id}>
-            <div className="thead">
+            <div className="thead" style={{ minHeight: laneH }}>
               <b>{tr.name}</b>
               <span className="time">{tr.kind === 'audio' ? '🔊 صوت' : tr.kind === 'video' ? '🎬 فيديو' : '✨ تراكب'}</span>
               <div className="ops">
@@ -111,7 +114,7 @@ export default function Timeline() {
             </div>
             <div
               className="lane" data-track={tr.id}
-              style={{ width, backgroundImage: gridBg, opacity: tr.hidden ? 0.45 : 1 }}
+              style={{ width, height: laneH, backgroundImage: gridBg, opacity: tr.hidden ? 0.45 : 1 }}
               onClick={seek}
             >
               <div className="playhead" style={{ right: time * zoom }} />
@@ -120,7 +123,7 @@ export default function Timeline() {
                 <div
                   key={c.id}
                   className={`clip ${c.type} ${selectedId === c.id ? 'sel' : ''}`}
-                  style={{ right: c.start * zoom, width: Math.max(26, c.duration * zoom) }}
+                  style={{ right: c.start * zoom, width: Math.max(26, c.duration * zoom), top: 8, height: Math.max(40, laneH - 16), fontSize: laneH > 104 ? 13.5 : 12.5 }}
                   onPointerDown={(e) => onClipDown(e, c.id, 'move')}
                   onClick={(e) => e.stopPropagation()}
                   onDoubleClick={() => useStore.getState().select(c.id)}

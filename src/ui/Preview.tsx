@@ -103,7 +103,7 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
         <button className="tbtn" onClick={() => useStore.getState().splitAt(time)} title="قص عند المؤشر (S)">✂</button>
         <input className="scrub" type="range" min={0} max={Math.max(1, dur)} step={0.033} value={shown}
           onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) setTime(v); }} />
-        <span className="time">{fmt(shown)} / {fmt(dur)}</span>
+        <span className="time"><span dir="ltr">{fmt(shown)} / {fmt(dur)}</span></span>
         <button className="btn pri sm" onClick={() => setExp((e) => ({ ...e, open: true }))}>📤 تصدير</button>
       </div>
 

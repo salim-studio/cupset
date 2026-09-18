@@ -85,7 +85,7 @@ export function MediaBin({ toast }: { toast: (m: string) => void }) {
 
       <div className="card">
         <h3>🎞 مقاطع التايم لاين ({clips.length})</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 380, overflow: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflow: 'auto' }}>
           {clips.length === 0 && <span className="time">استورد فيديو/صور/صوت وابدأ التحرير — كل شيء يعمل محلياً وبدون رفع.</span>}
           {clips.map((c) => (
             <div key={c.id} className="media-item" onClick={() => { useStore.getState().select(c.id); useStore.getState().setTime(c.start + 0.01); }} style={{ cursor: 'pointer' }}>
@@ -97,14 +97,14 @@ export function MediaBin({ toast }: { toast: (m: string) => void }) {
         </div>
       </div>
 
-      <div className="card">
-        <h3>⌨ اختصارات</h3>
-        <div className="time" style={{ lineHeight: 2 }}>
+      <details className="card">
+        <summary>⌨ اختصارات</summary>
+        <div className="time" style={{ lineHeight: 2, marginTop: 8 }}>
           <span className="kbd">مسافة</span> تشغيل/إيقاف<br />
           <span className="kbd">S</span> قص • <span className="kbd">Del</span> حذف<br />
           <span className="kbd">→</span><span className="kbd">←</span> تنقل • <span className="kbd">Ctrl+Z</span> تراجع
         </div>
-      </div>
+      </details>
     </div>
   );
 }

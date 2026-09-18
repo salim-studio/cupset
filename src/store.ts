@@ -10,12 +10,14 @@ interface State {
   currentTime: number;
   playing: boolean;
   zoom: number;
+  laneH: number;
   selectedId: string | null;
   past: Snapshot[];
   future: Snapshot[];
   setTime: (t: number) => void;
   setPlaying: (p: boolean) => void;
   setZoom: (z: number) => void;
+  setLaneH: (h: number) => void;
   setName: (n: string) => void;
   select: (id: string | null) => void;
   pushHistory: () => void;
@@ -58,8 +60,7 @@ function probeDuration(file: File, type: string): Promise<number> {
 
 const num = (v: unknown, fb: number) => (Number.isFinite(+ (v as number)) ? +(v as number) : fb);
 
-/**-sc1- sanitize any clip: kills NaN/Infinity coming from inputs or drag math */
-function sanitize(c: Clip): Clip {
+export function sanitize(c: Clip): Clip {
   c.start = Math.max(0, num(c.start, 0));
   c.duration = Math.max(0.2, num(c.duration, 2));
   c.offset = Math.max(0, num(c.offset, 0));
@@ -88,6 +89,7 @@ export const useStore = create<State>((set, get) => ({
   currentTime: 0,
   playing: false,
   zoom: 62,
+  laneH: 96,
   selectedId: null,
   past: [],
   future: [],
@@ -98,6 +100,7 @@ export const useStore = create<State>((set, get) => ({
   },
   setPlaying: (playing) => set({ playing }),
   setZoom: (zoom) => set({ zoom: Math.min(320, Math.max(14, zoom)) }),
+  setLaneH: (h) => set({ laneH: Math.min(160, Math.max(56, Number.isFinite(h) ? h : 96)) }),
   setName: (projectName) => set({ projectName }),
   select: (selectedId) => set({ selectedId }),
 
@@ -111,7 +114,7 @@ export const useStore = create<State>((set, get) => ({
     if (!past.length) return;
     const prev = past[past.length - 1];
     set({
-      tracks: prev.tracks, clips: prev.clips,
+      tracks: prev.tracks, clips: prev.clips.map((c) => sanitize({ ...c })),
       past: past.slice(0, -1),
       future: [{ tracks, clips }, ...future].slice(0, 60),
       selectedId: null,
@@ -121,7 +124,7 @@ export const useStore = create<State>((set, get) => ({
     const { future, past, tracks, clips } = get();
     if (!future.length) return;
     const [next, ...rest] = future;
-    set({ tracks: next.tracks, clips: next.clips, past: [...past, { tracks, clips }], future: rest, selectedId: null });
+    set({ tracks: next.tracks, clips: next.clips.map((c) => sanitize({ ...c })), past: [...past, { tracks, clips }], future: rest, selectedId: null });
   },
 
   addFiles: async (files) => {
@@ -232,8 +235,8 @@ export const useStore = create<State>((set, get) => ({
     const hit = get().clips.find((c) => t > c.start + 0.1 && t < c.start + c.duration - 0.1);
     if (!hit) return;
     get().pushHistory();
-    const left: Clip = { ...hit, duration: t - hit.start };
-    const right: Clip = { ...hit, id: uid(), start: t, duration: hit.start + hit.duration - t, offset: hit.offset + (t - hit.start) };
+    const left: Clip = sanitize({ ...hit, duration: t - hit.start });
+    const right: Clip = sanitize({ ...hit, id: uid(), start: t, duration: hit.start + hit.duration - t, offset: hit.offset + (t - hit.start) });
     set({ clips: [...get().clips.filter((c) => c.id !== hit.id), left, right], selectedId: right.id });
   },
 
@@ -245,5 +248,8 @@ export const useStore = create<State>((set, get) => ({
 
   toggleTrack: (id, key) => set({ tracks: get().tracks.map((t) => (t.id === id ? { ...t, [key]: !t[key] } : t)) }),
   clearAll: () => { get().pushHistory(); set({ clips: [], selectedId: null, currentTime: 0, playing: false }); },
-  loadProject: (tracks, clips, name) => set({ tracks: tracks.length ? tracks : baseTracks(), clips, projectName: name || 'مشروع CupSet', selectedId: null, currentTime: 0 }),
+  loadProject: (tracks, clips, name) => {
+    const clean = (Array.isArray(clips) ? clips : []).filter((c) => c && typeof c === 'object').map((c) => sanitize({ ...(c as Clip) }));
+    set({ tracks: tracks.length ? tracks : baseTracks(), clips: clean, projectName: name || 'مشروع CupSet', selectedId: null, currentTime: 0 });
+  },
 }));

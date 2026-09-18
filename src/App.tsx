@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Preview from './ui/Preview';
 import Timeline from './ui/Timeline';
 import { Inspector, MediaBin } from './ui/Panels';
-import { useStore } from './store';
+import { useStore, sanitize } from './store';
 
 export default function App() {
   const name = useStore((s) => s.projectName);
@@ -14,6 +14,13 @@ export default function App() {
     const t = setTimeout(() => setToastMsg(''), 3200);
     return () => clearTimeout(t);
   }, [toastMsg]);
+
+  // self-heal once: sanitize any legacy bad values (NaN/null) then clamp time
+  useEffect(() => {
+    useStore.setState((s) => ({ clips: s.clips.map((c) => sanitize({ ...c })) }));
+    const st = useStore.getState();
+    st.setTime(st.currentTime);
+  }, []);
 
   // autosave (without blob urls) + restore
   useEffect(() => {
