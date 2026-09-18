@@ -1,6 +1,14 @@
+<p align="center">
+  <img src="assets/logo.png" width="128" alt="CupSet logo" />
+</p>
+
 # 🎬 CupSet
 
-**Free, professional video editing right in your browser.**
+<p align="center"><strong>Free, professional video editing right in your browser.</strong></p>
+
+<p align="center">
+  <img src="assets/banner.png" alt="CupSet — free browser video editor, no uploads, no watermark" />
+</p>
 
 CupSet is a fast, lightweight, fully client-side video editor. No installs, no uploads, no watermarks — your footage never leaves your device.
 
