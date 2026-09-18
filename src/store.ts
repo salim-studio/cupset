@@ -1,0 +1,223 @@
+import { create } from 'zustand';
+import { Clip, Track, defaultFilter, defaultText, defaultTransform, uid } from './types';
+
+interface Snapshot { tracks: Track[]; clips: Clip[]; }
+
+interface State {
+  projectName: string;
+  tracks: Track[];
+  clips: Clip[];
+  currentTime: number;
+  playing: boolean;
+  zoom: number;
+  selectedId: string | null;
+  past: Snapshot[];
+  future: Snapshot[];
+  setTime: (t: number) => void;
+  setPlaying: (p: boolean) => void;
+  setZoom: (z: number) => void;
+  setName: (n: string) => void;
+  select: (id: string | null) => void;
+  pushHistory: () => void;
+  undo: () => void;
+  redo: () => void;
+  addFiles: (files: FileList | File[]) => Promise<void>;
+  addText: () => void;
+  addShape: (shape: 'rect' | 'circle' | 'bar') => void;
+  addSubtitle: (content: string, start: number, duration: number) => void;
+  updateClip: (id: string, patch: Partial<Clip>) => void;
+  updateClipDeep: (id: string, fn: (c: Clip) => Clip) => void;
+  moveClip: (id: string, start: number, trackId?: string) => void;
+  trimClip: (id: string, edge: 'left' | 'right', delta: number) => void;
+  splitAt: (t: number) => void;
+  deleteClip: (id: string) => void;
+  deleteSelected: () => void;
+  toggleTrack: (id: string, key: 'locked' | 'hidden' | 'muted') => void;
+  clearAll: () => void;
+  loadProject: (tracks: Track[], clips: Clip[], name?: string) => void;
+}
+
+const baseTracks = (): Track[] => [
+  { id: 'v1', kind: 'video', name: 'فيديو 1', locked: false, hidden: false, muted: false },
+  { id: 'v2', kind: 'overlay', name: 'تراكب / نص', locked: false, hidden: false, muted: false },
+  { id: 'a1', kind: 'audio', name: 'صوت 1', locked: false, hidden: false, muted: false },
+];
+
+function probeDuration(file: File, type: string): Promise<number> {
+  return new Promise((resolve) => {
+    if (type === 'image') return resolve(5);
+    const url = URL.createObjectURL(file);
+    const el = type === 'audio' ? new Audio() : document.createElement('video');
+    el.preload = 'metadata';
+    el.onloadedmetadata = () => { const d = el.duration || 5; URL.revokeObjectURL(url); resolve(isFinite(d) ? d : 5); };
+    el.onerror = () => resolve(5);
+    el.src = url;
+    setTimeout(() => resolve(5), 6000);
+  });
+}
+
+export const totalDuration = (clips: Clip[]) => clips.reduce((m, c) => Math.max(m, c.start + c.duration), 8);
+
+export const useStore = create<State>((set, get) => ({
+  projectName: 'مشروع CupSet',
+  tracks: baseTracks(),
+  clips: [],
+  currentTime: 0,
+  playing: false,
+  zoom: 62,
+  selectedId: null,
+  past: [],
+  future: [],
+
+  setTime: (t) => set({ currentTime: Math.max(0, t) }),
+  setPlaying: (playing) => set({ playing }),
+  setZoom: (zoom) => set({ zoom: Math.min(320, Math.max(14, zoom)) }),
+  setName: (projectName) => set({ projectName }),
+  select: (selectedId) => set({ selectedId }),
+
+  pushHistory: () => {
+    const { tracks, clips, past } = get();
+    const snap = { tracks: JSON.parse(JSON.stringify(tracks)), clips: JSON.parse(JSON.stringify(clips)) };
+    set({ past: [...past.slice(-59), snap], future: [] });
+  },
+  undo: () => {
+    const { past, future, tracks, clips } = get();
+    if (!past.length) return;
+    const prev = past[past.length - 1];
+    set({
+      tracks: prev.tracks, clips: prev.clips,
+      past: past.slice(0, -1),
+      future: [{ tracks, clips }, ...future].slice(0, 60),
+      selectedId: null,
+    });
+  },
+  redo: () => {
+    const { future, past, tracks, clips } = get();
+    if (!future.length) return;
+    const [next, ...rest] = future;
+    set({ tracks: next.tracks, clips: next.clips, past: [...past, { tracks, clips }], future: rest, selectedId: null });
+  },
+
+  addFiles: async (files) => {
+    get().pushHistory();
+    const arr = Array.from(files);
+    let endCursor: Record<string, number> = {};
+    for (const c of get().clips) endCursor[c.trackId] = Math.max(endCursor[c.trackId] || 0, c.start + c.duration);
+    const next: Clip[] = [];
+    for (const f of arr) {
+      const isV = f.type.startsWith('video');
+      const isA = f.type.startsWith('audio');
+      const isI = f.type.startsWith('image');
+      if (!isV && !isA && !isI) continue;
+      const type = isV ? 'video' : isA ? 'audio' : 'image';
+      const mediaDuration = await probeDuration(f, type);
+      const url = URL.createObjectURL(f);
+      const dur = type === 'image' ? 5 : Math.min(mediaDuration, 120);
+      const trackId = type === 'audio' ? 'a1' : isV ? 'v1' : 'v2';
+      const start = endCursor[trackId] || 0;
+      endCursor[trackId] = start + dur + 0.15;
+      next.push({
+        id: uid(), trackId, type, name: f.name, url, mediaDuration,
+        start, duration: dur, offset: 0, volume: 90, rate: 1,
+        transform: defaultTransform(), filter: defaultFilter(), text: defaultText(),
+        fadeIn: 0, fadeOut: 0,
+      });
+    }
+    if (next.length) set({ clips: [...get().clips, ...next], selectedId: next[0].id });
+  },
+
+  addText: () => {
+    get().pushHistory();
+    const t = get().currentTime;
+    const id = uid();
+    set({
+      clips: [...get().clips, {
+        id, trackId: 'v2', type: 'text', name: 'نص', mediaDuration: 4,
+        start: t, duration: 4, offset: 0, volume: 100, rate: 1,
+        transform: defaultTransform(), filter: defaultFilter(), text: defaultText(),
+        fadeIn: 0.25, fadeOut: 0.25,
+      }],
+      selectedId: id,
+    });
+  },
+
+  addShape: (shape) => {
+    get().pushHistory();
+    const id = uid();
+    set({
+      clips: [...get().clips, {
+        id, trackId: 'v2', type: 'shape', name: 'شكل', mediaDuration: 4, shape,
+        color: shape === 'bar' ? '#22d3ee' : '#f43f5e',
+        start: get().currentTime, duration: 4, offset: 0, volume: 100, rate: 1,
+        transform: { ...defaultTransform(), scale: shape === 'bar' ? 60 : 40 },
+        filter: defaultFilter(), text: defaultText(), fadeIn: 0, fadeOut: 0,
+      }],
+      selectedId: id,
+    });
+  },
+
+  addSubtitle: (content, start, duration) => {
+    get().pushHistory();
+    const id = uid();
+    set({
+      clips: [...get().clips, {
+        id, trackId: 'v2', type: 'text', name: 'ترجمة', mediaDuration: duration,
+        start, duration, offset: 0, volume: 100, rate: 1,
+        transform: { ...defaultTransform(), y: 32 },
+        filter: defaultFilter(),
+        text: { ...defaultText(), content, fontSize: 44 },
+        fadeIn: 0.15, fadeOut: 0.15,
+      }],
+      selectedId: id,
+    });
+  },
+
+  updateClip: (id, patch) => set({ clips: get().clips.map((c) => (c.id === id ? { ...c, ...patch } : c)) }),
+  updateClipDeep: (id, fn) => set({ clips: get().clips.map((c) => (c.id === id ? fn({ ...c }) : c)) }),
+
+  moveClip: (id, start, trackId) => {
+    const c = get().clips.find((x) => x.id === id);
+    if (!c) return;
+    const tr = get().tracks.find((t) => t.id === (trackId || c.trackId));
+    if (!tr || tr.locked) return;
+    // keep type/track compatibility
+    if (c.type === 'audio' && tr.kind !== 'audio') return;
+    if (c.type !== 'audio' && tr.kind === 'audio') return;
+    set({ clips: get().clips.map((x) => (x.id === id ? { ...x, start: Math.max(0, start), trackId: trackId || x.trackId } : x)) });
+  },
+
+  trimClip: (id, edge, delta) => {
+    set({
+      clips: get().clips.map((c) => {
+        if (c.id !== id) return c;
+        if (edge === 'left') {
+          const ns = Math.max(0, c.start + delta);
+          const d = c.duration - (ns - c.start);
+          if (d < 0.2) return c;
+          return { ...c, start: ns, duration: d, offset: Math.max(0, c.offset + (ns - c.start)) };
+        }
+        const d = Math.max(0.2, c.duration + delta);
+        return { ...c, duration: Math.min(d, c.mediaDuration - c.offset || d) };
+      }),
+    });
+  },
+
+  splitAt: (t) => {
+    const hit = get().clips.find((c) => t > c.start + 0.1 && t < c.start + c.duration - 0.1);
+    if (!hit) return;
+    get().pushHistory();
+    const left: Clip = { ...hit, duration: t - hit.start };
+    const right: Clip = { ...hit, id: uid(), start: t, duration: hit.start + hit.duration - t, offset: hit.offset + (t - hit.start) };
+    set({ clips: [...get().clips.filter((c) => c.id !== hit.id), left, right], selectedId: right.id });
+  },
+
+  deleteClip: (id) => { get().pushHistory(); set({ clips: get().clips.filter((c) => c.id !== id), selectedId: null }); },
+  deleteSelected: () => {
+    const { selectedId } = get();
+    if (selectedId) get().deleteClip(selectedId);
+  },
+
+  toggleTrack: (id, key) => set({ tracks: get().tracks.map((t) => (t.id === id ? { ...t, [key]: !t[key] } : t)) }),
+  clearAll: () => { get().pushHistory(); set({ clips: [], selectedId: null, currentTime: 0, playing: false }); },
+  loadProject: (tracks, clips, name) => set({ tracks: tracks.length ? tracks : baseTracks(), clips, projectName: name || 'مشروع CupSet', selectedId: null, currentTime: 0 }),
+}));

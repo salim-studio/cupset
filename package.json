@@ -1,0 +1,23 @@
+{
+  "name": "cupset",
+  "version": "1.0.0",
+  "description": "CupSet — محرر فيديو احترافي داخل المتصفح (بديل CapCut مفتوح المصدر). سريع، يعمل 100% محلياً بدون رفع.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.8"
+  }
+}
