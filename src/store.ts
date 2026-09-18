@@ -1,10 +1,21 @@
 import { create } from 'zustand';
 import { Clip, Track, defaultFilter, defaultText, defaultTransform, uid } from './types';
+import { Lang } from './i18n';
+
+function loadLang(): Lang {
+  try {
+    const v = localStorage.getItem('cupset-lang');
+    if (v === 'ar' || v === 'fr' || v === 'en') return v;
+  } catch { /* noop */ }
+  return 'en';
+}
 
 interface Snapshot { tracks: Track[]; clips: Clip[]; }
 
 interface State {
   projectName: string;
+  lang: Lang;
+  setLang: (l: Lang) => void;
   tracks: Track[];
   clips: Clip[];
   currentTime: number;
@@ -84,6 +95,11 @@ export const totalDuration = (clips: Clip[]) =>
 
 export const useStore = create<State>((set, get) => ({
   projectName: 'CupSet Project',
+  lang: loadLang(),
+  setLang: (lang) => {
+    try { localStorage.setItem('cupset-lang', lang); } catch { /* noop */ }
+    set({ lang });
+  },
   tracks: baseTracks(),
   clips: [],
   currentTime: 0,
@@ -159,11 +175,13 @@ export const useStore = create<State>((set, get) => ({
     get().pushHistory();
     const t = get().currentTime;
     const id = uid();
+    const lang = get().lang;
+    const content = lang === 'ar' ? 'نص جديد' : lang === 'fr' ? 'Nouveau texte' : 'New text';
     set({
       clips: [...get().clips, {
         id, trackId: 'v2', type: 'text', name: 'Text', mediaDuration: 4,
         start: t, duration: 4, offset: 0, volume: 100, rate: 1,
-        transform: defaultTransform(), filter: defaultFilter(), text: defaultText(),
+        transform: defaultTransform(), filter: defaultFilter(), text: { ...defaultText(), content },
         fadeIn: 0.25, fadeOut: 0.25,
       }],
       selectedId: id,

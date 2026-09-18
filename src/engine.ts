@@ -1,4 +1,5 @@
 import { Clip, FilterState } from './types';
+import { Lang, STR } from './i18n';
 
 export const W = 1280; export const H = 720;
 
@@ -71,7 +72,7 @@ function textAnimAlpha(clip: Clip, local: number): { a: number; dy: number; scal
   return { a: Math.max(0, Math.min(1, a)), dy, scale };
 }
 
-export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden: Record<string, boolean>, time: number) {
+export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden: Record<string, boolean>, time: number, lang: Lang = 'en') {
   ctx.save();
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
@@ -84,6 +85,7 @@ export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden
 
   if (vis.length === 0) {
     // empty-state hint so the preview never looks "broken"
+    const s = STR[lang] || STR.en;
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.strokeStyle = '#2b3a5e'; ctx.lineWidth = 3; ctx.setLineDash([18, 12]);
@@ -91,10 +93,10 @@ export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden
     ctx.setLineDash([]);
     ctx.fillStyle = '#8fa0c2';
     ctx.font = '800 44px Inter, "Segoe UI", Arial, sans-serif';
-    ctx.fillText('🎬 Import media from the side panel to begin', W / 2, H / 2 - 22);
+    ctx.fillText(s.empty1, W / 2, H / 2 - 22);
     ctx.fillStyle = '#5b6a8c';
     ctx.font = '500 26px Inter, "Segoe UI", Arial, sans-serif';
-    ctx.fillText('Video • images • audio • text — everything runs locally, nothing is uploaded', W / 2, H / 2 + 34);
+    ctx.fillText(s.empty2, W / 2, H / 2 + 34);
     ctx.restore();
     return;
   }

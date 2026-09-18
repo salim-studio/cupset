@@ -3,6 +3,7 @@ import Preview from './ui/Preview';
 import Timeline from './ui/Timeline';
 import { Inspector, MediaBin } from './ui/Panels';
 import { useStore, sanitize } from './store';
+import { LANGS, STR } from './i18n';
 
 function Logo() {
   return (
@@ -19,6 +20,8 @@ function Logo() {
 
 export default function App() {
   const name = useStore((s) => s.projectName);
+  const lang = useStore((s) => s.lang);
+  const t = STR[lang];
   const [toastMsg, setToastMsg] = useState('');
   const toast = useCallback((m: string) => { setToastMsg(m); }, []);
 
@@ -27,6 +30,12 @@ export default function App() {
     const t = setTimeout(() => setToastMsg(''), 3200);
     return () => clearTimeout(t);
   }, [toastMsg]);
+
+  // apply language + text direction to the document
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  }, [lang]);
 
   // self-heal once: sanitize any legacy bad values (NaN/null) then clamp time
   useEffect(() => {
@@ -66,7 +75,7 @@ export default function App() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       const st = useStore.getState();
       if (e.code === 'Space') { e.preventDefault(); st.setPlaying(!st.playing); }
-      else if (e.key === 's' || e.key === 'S') st.splitAt(st.currentTime);
+      else if (e.key === 's' || e.key === 'S' || e.key === 'س') st.splitAt(st.currentTime);
       else if (e.key === 'Delete' || e.key === 'Backspace') st.deleteSelected();
       else if (e.key === 'ArrowRight') st.setTime(st.currentTime + (e.shiftKey ? 2 : 1 / 30));
       else if (e.key === 'ArrowLeft') st.setTime(Math.max(0, st.currentTime - (e.shiftKey ? 2 : 1 / 30)));
@@ -84,12 +93,19 @@ export default function App() {
         <div className="brand">Cup<small>Set</small></div>
         <input type="text" value={name} onChange={(e) => useStore.getState().setName(e.target.value)}
           style={{ maxWidth: 220, background: '#0d1322', border: '1px solid var(--line)', color: 'var(--txt)', borderRadius: 9, padding: '7px 10px', fontSize: 13 }} />
-        <span className="time">Browser video editor • fast • no uploads • no watermark</span>
+        <span className="time tagline">{t.tagline}</span>
         <span style={{ flex: 1 }} />
+        <div className="langsw" role="group" aria-label="Language">
+          {LANGS.map((l) => (
+            <button key={l.id} className={lang === l.id ? 'on' : ''} onClick={() => useStore.getState().setLang(l.id)}>
+              {l.label}
+            </button>
+          ))}
+        </div>
         <button className="btn sm" onClick={() => useStore.getState().undo()}>↩</button>
         <button className="btn sm" onClick={() => useStore.getState().redo()}>↪</button>
-        <button className="btn sm danger" onClick={() => { if (confirm('Clear all clips?')) useStore.getState().clearAll(); }}>🗑 New</button>
-        <button className="btn pri" onClick={() => window.dispatchEvent(new Event('cupset-export'))}>📤 Export</button>
+        <button className="btn sm danger" onClick={() => { if (confirm(t.confirmClear)) useStore.getState().clearAll(); }}>{t.newBtn}</button>
+        <button className="btn pri" onClick={() => window.dispatchEvent(new Event('cupset-export'))}>{t.exportBtn}</button>
       </header>
 
       <div className="layout">
@@ -102,7 +118,7 @@ export default function App() {
       </div>
 
       <footer className="foot">
-        <span>© 2026 salim-slimani — CupSet. Free &amp; open source, MIT licensed.</span>
+        <span>{t.footer}</span>
       </footer>
 
       {toastMsg && <div className="toast">{toastMsg}</div>}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { H, W, renderFrame, startRecorder, syncMedia } from '../engine';
 import { useStore, totalDuration } from '../store';
+import { STR } from '../i18n';
 import { fmt } from '../types';
 
 export default function Preview({ toast }: { toast: (m: string) => void }) {
@@ -8,6 +9,8 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
   const tracks = useStore((s) => s.tracks);
   const time = useStore((s) => s.currentTime);
   const playing = useStore((s) => s.playing);
+  const lang = useStore((s) => s.lang);
+  const t = STR[lang];
   const setTime = useStore((s) => s.setTime);
   const setPlaying = useStore((s) => s.setPlaying);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,6 +18,7 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
   const playRef = useRef(playing); playRef.current = playing;
   const clipsRef = useRef(clips); clipsRef.current = clips;
   const tracksRef = useRef(tracks); tracksRef.current = tracks;
+  const langRef = useRef(lang); langRef.current = lang;
   const [exp, setExp] = useState<{ open: boolean; busy: boolean; p: number; url: string; ext: string }>({ open: false, busy: false, p: 0, url: '', ext: 'webm' });
 
   useEffect(() => {
@@ -41,7 +45,7 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
       const cv = canvasRef.current;
       if (cv) {
         const ctx = cv.getContext('2d')!;
-        renderFrame(ctx, clipsRef.current, hidden, timeRef.current);
+        renderFrame(ctx, clipsRef.current, hidden, timeRef.current, langRef.current);
       }
       raf = requestAnimationFrame(loop);
     };
@@ -57,10 +61,11 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
     try {
       setExp((e) => ({ ...e, busy: true, p: 0 }));
       const st = useStore.getState();
+      const tt = STR[st.lang];
       st.setTime(0); st.setPlaying(false);
       await new Promise((r) => setTimeout(r, 350));
       const muted: Record<string, boolean> = {};
-      for (const t of st.tracks) muted[t.id] = t.muted;
+      for (const tr of st.tracks) muted[tr.id] = tr.muted;
       const { rec, done, mime } = startRecorder(cv, st.clips, muted, quality === '4k' ? 20_000_000 : quality === 'fhd' ? 12_000_000 : 6_000_000);
       const target = totalDuration(st.clips);
       st.setPlaying(true);
@@ -80,10 +85,11 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
       const ext = mime.includes('mp4') ? 'mp4' : 'webm';
       const url = URL.createObjectURL(blob);
       setExp((e) => ({ ...e, busy: false, p: 1, url, ext }));
-      toast(`Export complete (${ext.toUpperCase()}) — ready to download`);
+      toast(`${tt.exportOk} (${ext.toUpperCase()}) ${tt.readyDl}`);
     } catch (e: any) {
+      const tt = STR[useStore.getState().lang];
       setExp((x) => ({ ...x, busy: false }));
-      toast('Export failed: ' + (e?.message || e));
+      toast(tt.exportFail + (e?.message || e));
     }
   };
 
@@ -91,38 +97,38 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
     <div className="preview-wrap">
       <canvas ref={canvasRef} id="cupset-stage" className="stage" width={W} height={H} />
       <div className="transport">
-        <button className="tbtn" onClick={() => setTime(0)} title="Go to start">⏮</button>
-        <button className="tbtn" onClick={() => setTime(Math.max(0, time - 2))} title="Back 2s">↺</button>
-        <button className="tbtn play" onClick={() => setPlaying(!playing)} title="Play / pause (Space)">
+        <button className="tbtn" onClick={() => setTime(0)} title={t.toStart}>⏮</button>
+        <button className="tbtn" onClick={() => setTime(Math.max(0, time - 2))} title={t.back2}>↺</button>
+        <button className="tbtn play" onClick={() => setPlaying(!playing)} title={t.playPause}>
           {playing ? '⏸' : '▶'}
         </button>
-        <button className="tbtn" onClick={() => setTime(time + 2)} title="Forward 2s">↻</button>
-        <button className="tbtn" onClick={() => useStore.getState().splitAt(time)} title="Split at playhead (S)">✂</button>
+        <button className="tbtn" onClick={() => setTime(time + 2)} title={t.fwd2}>↻</button>
+        <button className="tbtn" onClick={() => useStore.getState().splitAt(time)} title={t.splitHere}>✂</button>
         <input className="scrub" type="range" min={0} max={Math.max(1, dur)} step={0.033} value={shown}
           onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) setTime(v); }} />
         <span className="time"><span dir="ltr">{fmt(shown)} / {fmt(dur)}</span></span>
-        <button className="btn pri sm" onClick={() => setExp((e) => ({ ...e, open: true }))}>📤 Export</button>
+        <button className="btn pri sm" onClick={() => setExp((e) => ({ ...e, open: true }))}>{t.exportBtn}</button>
       </div>
 
       {exp.open && (
         <div className="card">
-          <h3>📤 Export video — fast, 100% local</h3>
+          <h3>{t.expTitle}</h3>
           <div className="row" style={{ flexWrap: 'wrap' }}>
-            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('hd')}>720p fast</button>
-            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('fhd')}>1080p balanced</button>
-            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('4k')}>Max quality</button>
-            <button className="btn sm" onClick={() => setExp((e) => ({ ...e, open: false }))}>Close</button>
+            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('hd')}>{t.qHD}</button>
+            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('fhd')}>{t.qFHD}</button>
+            <button className="btn sm" disabled={exp.busy} onClick={() => doExport('4k')}>{t.q4K}</button>
+            <button className="btn sm" onClick={() => setExp((e) => ({ ...e, open: false }))}>{t.close}</button>
           </div>
           {(exp.busy || exp.p > 0) && (
             <div style={{ marginTop: 10 }}>
               <div className="exp-bar"><i style={{ width: `${Math.round(exp.p * 100)}%` }} /></div>
-              <div className="time" style={{ marginTop: 4 }}>{exp.busy ? `Exporting… ${Math.round(exp.p * 100)}%` : 'Done ✅'}</div>
+              <div className="time" style={{ marginTop: 4 }}>{exp.busy ? `${t.exporting} ${Math.round(exp.p * 100)}%` : t.done}</div>
             </div>
           )}
           {exp.url && (
             <div className="row" style={{ marginTop: 10 }}>
-              <a className="btn pri sm" href={exp.url} download={`cupset.${exp.ext}`}>⬇ Download cupset.{exp.ext}</a>
-              <span className="time">Works everywhere, no watermark</span>
+              <a className="btn pri sm" href={exp.url} download={`cupset.${exp.ext}`}>⬇ {t.download} cupset.{exp.ext}</a>
+              <span className="time">{t.noWatermark}</span>
             </div>
           )}
         </div>
