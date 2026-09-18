@@ -56,7 +56,30 @@ function probeDuration(file: File, type: string): Promise<number> {
   });
 }
 
-export const totalDuration = (clips: Clip[]) => clips.reduce((m, c) => Math.max(m, c.start + c.duration), 8);
+const num = (v: unknown, fb: number) => (Number.isFinite(+ (v as number)) ? +(v as number) : fb);
+
+/**-sc1- sanitize any clip: kills NaN/Infinity coming from inputs or drag math */
+function sanitize(c: Clip): Clip {
+  c.start = Math.max(0, num(c.start, 0));
+  c.duration = Math.max(0.2, num(c.duration, 2));
+  c.offset = Math.max(0, num(c.offset, 0));
+  c.rate = Math.min(4, Math.max(0.25, num(c.rate, 1)));
+  c.volume = Math.min(100, Math.max(0, num(c.volume, 90)));
+  c.fadeIn = Math.max(0, num(c.fadeIn, 0));
+  c.fadeOut = Math.max(0, num(c.fadeOut, 0));
+  const t = c.transform;
+  t.x = num(t.x, 0); t.y = num(t.y, 0);
+  t.scale = Math.min(300, Math.max(10, num(t.scale, 100)));
+  t.rotation = num(t.rotation, 0);
+  t.opacity = Math.min(100, Math.max(0, num(t.opacity, 100)));
+  return c;
+}
+
+export const totalDuration = (clips: Clip[]) =>
+  clips.reduce((m, c) => {
+    const e = num(c.start, 0) + num(c.duration, 0);
+    return Number.isFinite(e) ? Math.max(m, e) : m;
+  }, 8);
 
 export const useStore = create<State>((set, get) => ({
   projectName: 'مشروع CupSet',
@@ -69,7 +92,10 @@ export const useStore = create<State>((set, get) => ({
   past: [],
   future: [],
 
-  setTime: (t) => set({ currentTime: Math.max(0, t) }),
+  setTime: (t) => {
+    const dur = totalDuration(get().clips);
+    set({ currentTime: Math.max(0, Math.min(Number.isFinite(t) ? t : 0, dur + 0.001)) });
+  },
   setPlaying: (playing) => set({ playing }),
   setZoom: (zoom) => set({ zoom: Math.min(320, Math.max(14, zoom)) }),
   setName: (projectName) => set({ projectName }),
@@ -172,8 +198,8 @@ export const useStore = create<State>((set, get) => ({
     });
   },
 
-  updateClip: (id, patch) => set({ clips: get().clips.map((c) => (c.id === id ? { ...c, ...patch } : c)) }),
-  updateClipDeep: (id, fn) => set({ clips: get().clips.map((c) => (c.id === id ? fn({ ...c }) : c)) }),
+  updateClip: (id, patch) => set({ clips: get().clips.map((c) => (c.id === id ? sanitize({ ...c, ...patch }) : c)) }),
+  updateClipDeep: (id, fn) => set({ clips: get().clips.map((c) => (c.id === id ? sanitize(fn({ ...c })) : c)) }),
 
   moveClip: (id, start, trackId) => {
     const c = get().clips.find((x) => x.id === id);

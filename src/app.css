@@ -46,18 +46,29 @@ canvas.stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius:
 .tbtn.play { background: linear-gradient(135deg, #22d3ee, #818cf8); color: #06121f; border: none; font-size: 18px; }
 .time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--mut); }
 .scrub { flex: 1; }
-.timeline { flex: 1; overflow: auto; border-top: 1px solid var(--line); background: #0c111e; padding: 10px 12px 18px; }
-.ruler { position: relative; height: 24px; border-bottom: 1px dashed var(--line); margin-bottom: 6px; cursor: pointer; }
-.tick { position: absolute; top: 0; font-size: 10px; color: var(--mut); border-right: 1px solid var(--line); padding-right: 3px; height: 100%; }
-.playhead { position: absolute; top: -4px; bottom: -200px; width: 2px; background: var(--acc2); z-index: 5; pointer-events: none; }
+.timeline { flex: 1; overflow: auto; border-top: 1px solid var(--line); background: #0c111e; padding: 0 12px 18px; }
+.tl-tools { position: sticky; top: 0; z-index: 9; background: #0c111e; padding: 10px 0 8px; }
+.tl-hint { margin-top: 10px; }
+.ruler-row { margin-top: 2px; }
+.r-corner { position: sticky; right: 0; z-index: 4; background: #0c111e; font-size: 11px; color: var(--mut);
+  font-weight: 800; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; }
+.ruler { position: relative; height: 30px; background: #0a0f1e; border: 1px solid var(--line); border-radius: 8px;
+  cursor: pointer; overflow: hidden; min-width: 100%; }
+.tick { position: absolute; top: 0; font-size: 11px; font-weight: 700; color: #aeb9d4;
+  border-right: 1px solid #2b3a5e; padding: 4px 5px 0 0; height: 100%; font-variant-numeric: tabular-nums; }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--acc2); z-index: 5; pointer-events: none; }
 .playhead::before { content: ""; position: absolute; top: 0; right: -6px; border: 7px solid transparent; border-top-color: var(--acc2); }
-.trow { display: grid; grid-template-columns: 118px 1fr; gap: 8px; margin-bottom: 8px; }
-.thead { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; font-size: 12px; }
+.trow { display: grid; grid-template-columns: 132px max-content; gap: 8px; margin-bottom: 8px; }
+.thead { position: sticky; right: 0; z-index: 4; background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 6px 8px; font-size: 12px; }
 .thead b { display: block; font-size: 12.5px; }
 .thead .ops { display: flex; gap: 4px; margin-top: 6px; }
 .chip { font-size: 11px; border: 1px solid var(--line); background: #0d1322; border-radius: 7px; padding: 2px 6px; cursor: pointer; color: var(--mut); }
 .chip.on { color: var(--acc); border-color: var(--acc); }
-.lane { position: relative; height: 56px; background: #0e1424; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.lane { position: relative; height: 64px; background-color: #0e1424; background-repeat: repeat;
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-width: 100%; }
+.lane-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #5b6a8c;
+  font-size: 12px; font-weight: 700; pointer-events: none; white-space: nowrap; }
 .clip { position: absolute; top: 6px; height: 44px; border-radius: 9px; border: 1px solid rgba(255,255,255,.25);
   font-size: 11.5px; font-weight: 800; overflow: hidden; cursor: grab; display: flex; align-items: center; padding: 0 8px; gap: 6px; white-space: nowrap; }
 .clip.sel { outline: 2px solid var(--acc); }

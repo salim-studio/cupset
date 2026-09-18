@@ -75,11 +75,30 @@ export function renderFrame(ctx: CanvasRenderingContext2D, clips: Clip[], hidden
   ctx.save();
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
+  ctx.restore();
   // draw order: video/img bottom, then shape/text top
   const order = (c: Clip) => (c.type === 'video' || c.type === 'image' ? 0 : c.type === 'shape' ? 1 : 2);
   const vis = clips
     .filter((c) => !hidden[c.trackId] && time >= c.start && time < c.start + c.duration)
     .sort((a, b) => order(a) - order(b) || a.start - b.start);
+
+  if (vis.length === 0) {
+    // empty-state hint so the preview never looks "broken"
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#2b3a5e'; ctx.lineWidth = 3; ctx.setLineDash([18, 12]);
+    ctx.strokeRect(90, 90, W - 180, H - 180);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#8fa0c2';
+    ctx.font = '800 44px Cairo, Tajawal, Arial, sans-serif';
+    ctx.fillText('🎬 استورد وسائط من اللوحة الجانبية للبدء', W / 2, H / 2 - 22);
+    ctx.fillStyle = '#5b6a8c';
+    ctx.font = '500 26px Cairo, Tajawal, Arial, sans-serif';
+    ctx.fillText('فيديو • صور • صوت • نصوص — كل شيء يعمل محلياً بدون رفع', W / 2, H / 2 + 34);
+    ctx.restore();
+    return;
+  }
+  ctx.save();
 
   for (const c of vis) {
     const local = time - c.start;

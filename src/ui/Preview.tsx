@@ -50,6 +50,7 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
   }, []);
 
   const dur = totalDuration(clips);
+  const shown = Math.min(Math.max(0, Number.isFinite(time) ? time : 0), dur);
 
   const doExport = async (quality: 'hd' | 'fhd' | '4k') => {
     const cv = canvasRef.current; if (!cv) return;
@@ -100,9 +101,9 @@ export default function Preview({ toast }: { toast: (m: string) => void }) {
         </button>
         <button className="tbtn" onClick={() => setTime(time + 2)} title="+2s">↻</button>
         <button className="tbtn" onClick={() => useStore.getState().splitAt(time)} title="قص عند المؤشر (S)">✂</button>
-        <input className="scrub" type="range" min={0} max={Math.max(1, dur)} step={0.033} value={time}
-          onChange={(e) => { setTime(parseFloat(e.target.value)); }} />
-        <span className="time">{fmt(time)} / {fmt(dur)}</span>
+        <input className="scrub" type="range" min={0} max={Math.max(1, dur)} step={0.033} value={shown}
+          onChange={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) setTime(v); }} />
+        <span className="time">{fmt(shown)} / {fmt(dur)}</span>
         <button className="btn pri sm" onClick={() => setExp((e) => ({ ...e, open: true }))}>📤 تصدير</button>
       </div>
 
